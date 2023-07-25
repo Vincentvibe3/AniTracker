@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AniTracker</string>
+    <string name="title_activity_login">Login</string>
+    <string name="title_activity_setup">Setup</string>
 </resources>

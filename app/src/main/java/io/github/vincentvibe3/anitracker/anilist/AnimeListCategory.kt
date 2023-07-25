@@ -1,11 +1,12 @@
-package io.github.vincentvibe3.anitracker.mal
+package io.github.vincentvibe3.anitracker.anilist
 
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import io.github.vincentvibe3.anitraklib.anilist.types.MediaListStatus
+
 
 data class AnimeListCategory(
     val name:String,
-    val type:Categories,
+    val type: MediaListStatus,
     val index:Int,
 ) {
     val backingList = mutableStateListOf<AnimeCardData>()

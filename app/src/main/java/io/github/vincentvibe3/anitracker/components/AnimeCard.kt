@@ -1,10 +1,12 @@
-package io.github.vincentvibe3.anitracker
+package io.github.vincentvibe3.anitracker.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -33,9 +36,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,15 +52,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.vincentvibe3.anitracker.mal.AnimeCardData
-import io.github.vincentvibe3.anitracker.mal.Categories
-import io.github.vincentvibe3.anitracker.mal.ImageResource
+import coil.compose.AsyncImage
+import io.github.vincentvibe3.anitracker.anilist.Clients
+import io.github.vincentvibe3.anitracker.anilist.AnimeCardData
+import io.github.vincentvibe3.anitracker.anilist.CategoryColors
+import io.github.vincentvibe3.anitracker.ui.theme.AniTrackerTheme
+import io.github.vincentvibe3.anitraklib.anilist.types.MediaListStatus
+import io.github.vincentvibe3.anitraklib.anilist.types.ScoreFormat
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -67,8 +72,10 @@ import kotlin.math.roundToInt
 @Composable
 fun AnimeCard(
     data:AnimeCardData,
-    entryType: Categories,
-    onEditPressed: () -> Unit,
+    entryType: MediaListStatus,
+    scoreFormat: ScoreFormat,
+    onCardPressed: () -> Unit,
+    onEditPressed: (anime: AnimeCardData) -> Unit,
     onScorePressed: (AnimeCardData) -> Unit,
     showComplete:Boolean=true,
     onCompletePressed: () -> Unit = {}
@@ -78,10 +85,15 @@ fun AnimeCard(
             .wrapContentHeight()
             .height(IntrinsicSize.Min)
     ){
+        val clickInteractionSource = remember{MutableInteractionSource()}
         Card(
             modifier = Modifier
                 .wrapContentHeight()
-                .height(IntrinsicSize.Min),
+                .height(IntrinsicSize.Min)
+                .clip(RoundedCornerShape(20.dp))
+                .clickable(clickInteractionSource, LocalIndication.current) {
+                    onCardPressed()
+                },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(Color(0xFFFFFFFF)),
         ) {
@@ -93,19 +105,16 @@ fun AnimeCard(
                 horizontalArrangement = Arrangement.spacedBy(15.dp)
             ) {
                 Column {
-                    Image(
-                        painter = if (data.image.type==ImageResource.ImageType.RESOURCE){
-                            painterResource(id = data.image.location.toInt())
-                        } else { painterResource(id = R.drawable.ic_launcher_background) },
-                        contentDescription = "",
-                        contentScale = ContentScale.FillHeight,
+                    AsyncImage(
+                        model = data.imageUrl,
+                        contentDescription = null,
+                        contentScale=ContentScale.FillHeight,
                         modifier = Modifier
                             .aspectRatio(4.67f / 6.47f, true)
                             .heightIn(75.dp, 75.dp)
                             .clip(RoundedCornerShape(15.dp))
                     )
                 }
-                //            }
                 Column(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -131,43 +140,26 @@ fun AnimeCard(
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        val buttonColor = entryType.color ?: 0xFF7E7E7E
+                        val buttonColor = CategoryColors.colors[entryType] ?: 0xFF7E7E7E
                         Button(
                             onClick = { onScorePressed(data) },
                             colors = ButtonDefaults.buttonColors(Color(buttonColor)),
                             shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text(text = "${data.score}/10")
+                            val maxValue = getMaxScore(scoreFormat)
+                            ScoreDisplay(score = data.score, maxValue = maxValue, scoreFormat = scoreFormat)
                         }
                         Row {
                             if (showComplete) {
-                                FilledIconButton(
+                                QuickAccessButton(
                                     onClick = onCompletePressed,
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        Color(
-                                            0xFFF0F0F0
-                                        )
-                                    )
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.size(16.dp),
-                                        imageVector = Icons.Outlined.Done,
-                                        contentDescription = ""
-                                    )
-                                }
-                            }
-                            FilledIconButton(
-                                onClick = onEditPressed,
-                                shape = RoundedCornerShape(10.dp),
-                                colors = IconButtonDefaults.filledIconButtonColors(Color(0xFFF0F0F0)),
-                            ) {
-                                Icon(
-                                    modifier = Modifier.size(16.dp),
-                                    imageVector = Icons.Outlined.Edit,
-                                    contentDescription = ""
+                                    icon = Icons.Outlined.Done
                                 )
                             }
+                            QuickAccessButton(
+                                onClick = {onEditPressed(data)},
+                                icon = Icons.Outlined.Edit
+                            )
                         }
                     }
                 }
@@ -176,13 +168,27 @@ fun AnimeCard(
     }
 }
 
+//@Composable
+fun anchors(data: AnimeCardData, sizePx:Float): Map<Float, Int> {
+    val map = mutableMapOf(0f to 0)
+    if (data.progress>0){
+        map[sizePx] = 1
+    }
+    if (data.progress<data.totalEpisodes){
+        map[-sizePx] = -1
+    }
+    return map.toMap()
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SwipeAnimeCard(
     modifier: Modifier=Modifier,
     data:AnimeCardData,
-    entryType: Categories,
-    onEditPressed: () -> Unit,
+    entryType: MediaListStatus,
+    scoreFormat: ScoreFormat,
+    onCardPressed: () -> Unit,
+    onEditPressed: (anime: AnimeCardData) -> Unit,
     onScorePressed: (AnimeCardData) -> Unit,
     showComplete:Boolean=true,
     onCompletePressed: () -> Unit = {}
@@ -192,7 +198,9 @@ fun SwipeAnimeCard(
     var swipeEnabled by remember { mutableStateOf(true) }
     val squareSize = 48.dp
     val sizePx = with(LocalDensity.current) { squareSize.toPx() }
-    val anchors = mapOf(-sizePx to -1, 0f to 0, sizePx to 1)
+    var anchors by remember {
+        mutableStateOf(anchors(data = data, sizePx = sizePx))
+    }
     val bgYScale by remember {
         derivedStateOf{
             abs((swipeableState.offset.value / sizePx)).coerceIn(0.4f, 1f)
@@ -288,17 +296,24 @@ fun SwipeAnimeCard(
                 LaunchedEffect(Unit) {
                     coroutineScope.launch {
                         data.progress--
+                        val anilist = Clients.anilistClient
+                        anilist.updateProgress(data.id, data.progress)
                         swipeEnabled = false
                         swipeableState.animateTo(0)
+                        anchors = anchors(data, sizePx)
                         swipeEnabled = true
+                        println(anchors)
                     }
                 }
             } else if (swipeableState.currentValue == -1 && !swipeableState.isAnimationRunning) {
                 LaunchedEffect(Unit) {
                     coroutineScope.launch {
                         data.progress++
+                        val anilist = Clients.anilistClient
+                        anilist.updateProgress(data.id, data.progress)
                         swipeEnabled = false
                         swipeableState.animateTo(0)
+                        anchors = anchors(data, sizePx)
                         swipeEnabled = true
                     }
                 }
@@ -306,10 +321,47 @@ fun SwipeAnimeCard(
             AnimeCard(
                 data,
                 entryType = entryType,
+                scoreFormat = scoreFormat,
                 onEditPressed = onEditPressed,
+                onCardPressed = onCardPressed,
                 onScorePressed = onScorePressed,
                 onCompletePressed = onCompletePressed,
                 showComplete = showComplete
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AnimeCardPreview(){
+    AniTrackerTheme {
+        val animeCardData by remember {
+            mutableStateOf(AnimeCardData(
+                "Genjitsu no Yohane: SUNSHINE in the MIRROR",
+                3f,
+                0,
+                12,
+                "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151513-0tGiS0NC3adv.jpg",
+                1,
+                MediaListStatus.CURRENT,
+                0,
+                ""
+            ))
+        }
+        Row(
+            Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SwipeAnimeCard(
+                data=animeCardData,
+                entryType = MediaListStatus.CURRENT,
+                scoreFormat = ScoreFormat.POINT_10,
+                onCardPressed = {},
+                onCompletePressed = {},
+                onEditPressed = {},
+                onScorePressed = {}
             )
         }
     }
