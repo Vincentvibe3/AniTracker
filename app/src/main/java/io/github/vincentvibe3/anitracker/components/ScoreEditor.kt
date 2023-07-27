@@ -88,7 +88,7 @@ fun ScoreEditor(
                 value--
             }
             onChange(value)
-        },Icons.Outlined.KeyboardArrowDown, enabled = if(scoringMethod==ScoreFormat.POINT_100){
+        }, Icons.Outlined.KeyboardArrowDown, enabled = if(scoringMethod==ScoreFormat.POINT_100){
             value>9
         } else {
             value>0
@@ -110,7 +110,7 @@ fun ScoreEditor(
                 value++
             }
             onChange(value)
-        },Icons.Outlined.KeyboardArrowUp, enabled = if(scoringMethod==ScoreFormat.POINT_100){
+        }, Icons.Outlined.KeyboardArrowUp, enabled = if(scoringMethod==ScoreFormat.POINT_100){
             value<=maxValue-10
         } else {
             value<maxValue
@@ -300,7 +300,7 @@ fun DialogPoint5(initialValue:Int, onDismissRequest:()->Unit, onConfirm:(Float)-
     var value by remember {
         mutableStateOf(initialValue)
     }
-    BaseScoreEditDialog(onDismissRequest, { onConfirm(value.toFloat()) }, true) {
+    DialogBox("Edit Score", onDismissRequest, { onConfirm(value.toFloat()) }, true) {
         Row(horizontalArrangement = Arrangement.spacedBy(
             10.dp
         )) {
@@ -343,7 +343,7 @@ fun DialogPoint3(initialValue:Int, onDismissRequest:()->Unit, onConfirm:(Float)-
         2 to PhosphorIcons.smiley_meh(),
         3 to PhosphorIcons.smiley()
     )
-    BaseScoreEditDialog(onDismissRequest, { onConfirm(value.toFloat()) }, true) {
+    DialogBox("Edit Score", onDismissRequest, { onConfirm(value.toFloat()) }, true) {
         Row(horizontalArrangement = Arrangement.spacedBy(
             10.dp
         )) {
@@ -400,7 +400,7 @@ fun DialogPoint10(initialValue:Int, onDismissRequest:()->Unit, onConfirm:(Float)
             value.toIntOrNull()!=null&&value.toInt()<=10&&value.toInt()>=0
         }
     }
-    BaseScoreEditDialog(onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
+    DialogBox("Edit Score", onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
         TextField(value = value, onValueChange = {
             value = it
         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
@@ -417,7 +417,7 @@ fun DialogPoint100(initialValue:Int, onDismissRequest:()->Unit, onConfirm:(Float
             value.toIntOrNull()!=null&&value.toInt()<=100&&value.toInt()>=0
         }
     }
-    BaseScoreEditDialog(onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
+    DialogBox("Edit Score", onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
         TextField(value = value, onValueChange = {
             value = it
         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
@@ -434,7 +434,7 @@ fun DialogPoint10Decimal(initialValue:Float, onDismissRequest:()->Unit, onConfir
             value.toFloatOrNull()!=null&&value.toFloat()<=100f&&value.toFloat()>=0f
         }
     }
-    BaseScoreEditDialog(onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
+    DialogBox("Edit Score", onDismissRequest, { onConfirm(value.toFloat()) }, isValid) {
         TextField(value = value, onValueChange = {
             value = it
         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))

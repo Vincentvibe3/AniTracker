@@ -66,6 +66,7 @@ import io.github.vincentvibe3.anitracker.ui.theme.AniTrackerTheme
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaListStatus
 import io.github.vincentvibe3.anitraklib.anilist.types.ScoreFormat
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -74,7 +75,7 @@ fun AnimeCard(
     data:AnimeCardData,
     entryType: MediaListStatus,
     scoreFormat: ScoreFormat,
-    onCardPressed: () -> Unit,
+    onCardPressed: (anime: AnimeCardData) -> Unit,
     onEditPressed: (anime: AnimeCardData) -> Unit,
     onScorePressed: (AnimeCardData) -> Unit,
     showComplete:Boolean=true,
@@ -92,7 +93,7 @@ fun AnimeCard(
                 .height(IntrinsicSize.Min)
                 .clip(RoundedCornerShape(20.dp))
                 .clickable(clickInteractionSource, LocalIndication.current) {
-                    onCardPressed()
+                    onCardPressed(data)
                 },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(Color(0xFFFFFFFF)),
@@ -187,7 +188,7 @@ fun SwipeAnimeCard(
     data:AnimeCardData,
     entryType: MediaListStatus,
     scoreFormat: ScoreFormat,
-    onCardPressed: () -> Unit,
+    onCardPressed: (anime: AnimeCardData) -> Unit,
     onEditPressed: (anime: AnimeCardData) -> Unit,
     onScorePressed: (AnimeCardData) -> Unit,
     showComplete:Boolean=true,
@@ -346,7 +347,13 @@ fun AnimeCardPreview(){
                 1,
                 MediaListStatus.CURRENT,
                 0,
-                ""
+                mutableListOf("Watching"),
+                mutableMapOf(),
+                "",
+                false,
+                false,
+                LocalDate(0,0,0),
+                LocalDate(0,0,0)
             ))
         }
         Row(

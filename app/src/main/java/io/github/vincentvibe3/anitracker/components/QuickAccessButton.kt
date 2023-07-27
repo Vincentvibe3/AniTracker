@@ -12,17 +12,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun QuickAccessButton(onClick:()->Unit, icon: ImageVector, enabled:Boolean=true){
+fun QuickAccessButton(onClick:()->Unit, icon: @Composable ()->Unit, modifier:Modifier=Modifier, enabled:Boolean=true, color:Color=Color(0xFFF0F0F0)){
     FilledIconButton(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        colors = IconButtonDefaults.filledIconButtonColors(Color(0xFFF0F0F0)),
-        enabled = enabled
+        colors = IconButtonDefaults.filledIconButtonColors(color),
+        enabled = enabled,
+        modifier = Modifier.then(modifier)
     ) {
-        Icon(
-            modifier = Modifier.size(16.dp),
-            imageVector = icon,
-            contentDescription = ""
-        )
+        icon()
     }
+}
+
+@Composable
+fun QuickAccessButton(onClick:()->Unit, icon: ImageVector, modifier:Modifier=Modifier, enabled:Boolean=true, color:Color=Color(0xFFF0F0F0)){
+    QuickAccessButton(onClick = onClick, icon = {
+        Icon(imageVector = icon, contentDescription = null, modifier=Modifier.size(16.dp))
+    }, modifier, enabled, color)
 }

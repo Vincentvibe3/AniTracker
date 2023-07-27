@@ -1,5 +1,8 @@
 package io.github.vincentvibe3.anitracker.views
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -37,7 +41,10 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -58,7 +65,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimeListLayout(animeListViewModel: AnimeListViewModel, scoreFormat: ScoreFormat, navigate: (String)->Unit, onEditRequest: (anime: AnimeCardData)->Unit, onCardPressed: () -> Unit){
+fun AnimeListLayout(animeListViewModel: AnimeListViewModel, scoreFormat: ScoreFormat, navigate: (String)->Unit, onEditRequest: (anime: AnimeCardData)->Unit, onCardPressed: (anime: AnimeCardData) -> Unit){
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -166,8 +173,10 @@ fun AnimeListLayout(animeListViewModel: AnimeListViewModel, scoreFormat: ScoreFo
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, scoreFormat: ScoreFormat, onEditRequest: (anime: AnimeCardData) -> Unit, onCardPressed:()->Unit, onAnimeCompleted:(AnimeCardData, removedFrom:String, addedTo:String) -> Unit){
-    val uiState = viewModel.uiState
+fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, scoreFormat: ScoreFormat, onEditRequest: (anime: AnimeCardData) -> Unit, onCardPressed:(anime: AnimeCardData)->Unit, onAnimeCompleted:(AnimeCardData, removedFrom:String, addedTo:String) -> Unit){
+//    val uiState = viewModel.uiState
+    val entries = viewModel.entries
+    val lists = viewModel.lists
     var showScoreEdit by remember {
         mutableStateOf(false)
     }
@@ -184,39 +193,74 @@ fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, score
             }
         }
     }
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = paddingValues.calculateTopPadding(),
-                bottom = paddingValues.calculateBottomPadding()
-            ),
-        contentPadding = PaddingValues(15.dp),
-        verticalArrangement = Arrangement.spacedBy(15.dp)
-    ){
-        for (list in uiState){
-            item {
-                SectionTitle(Modifier.animateItemPlacement() ,text = list.key)
-                if (list.value.isEmpty()){
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, top = 20.dp), horizontalArrangement = Arrangement.Start) {
-                        Text(text = "No anime in ${list.key}")
-                    }
-                }
-            }
-            items(list.value.backingList, key = { it.title }){ entry ->
-                SwipeAnimeCard(Modifier.animateItemPlacement(), entry, list.value.type, scoreFormat, onEditPressed =  onEditRequest, onScorePressed = {
-                    dataToEdit = it
-                    showScoreEdit = true
-                }, onCompletePressed = {
-                    viewModel.moveTo(entry, list.key, "Completed")
-                    onAnimeCompleted(entry, list.key, "Completed")
-                }, showComplete = list.value.type!= MediaListStatus.COMPLETED, onCardPressed = onCardPressed)
+    if (lists.isEmpty()){
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = paddingValues.calculateBottomPadding()
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator()
+        }
 
-            }
+    }
+    val categories = viewModel.organizedList
+    AnimatedVisibility(visible = lists.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = paddingValues.calculateBottomPadding()
+                ),
+            contentPadding = PaddingValues(15.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            println(categories)
+           for (category in categories) {
+               val items = category.value
+               val list = category.key
+               println(list)
+               println(items)
+               item {
+                   SectionTitle(Modifier.animateItemPlacement(), text = list)
+                   if (items.isEmpty()) {
+                       Row(
+                           Modifier
+                               .fillMaxWidth()
+                               .padding(start = 20.dp, top = 20.dp),
+                           horizontalArrangement = Arrangement.Start
+                       ) {
+                           Text(text = "No anime in $list")
+                       }
+                   }
+               }
+               items(category.value, key = { "${it.title}.$list" }) { entry ->
+                   SwipeAnimeCard(
+                       Modifier.animateItemPlacement(),
+                       entry,
+                       entry.status,
+                       scoreFormat,
+                       onEditPressed = onEditRequest,
+                       onScorePressed = {
+                           dataToEdit = it
+                           showScoreEdit = true
+                       },
+                       onCompletePressed = {
+                           viewModel.moveTo(entry, list, "Completed")
+                           onAnimeCompleted(entry, list, "Completed")
+                       },
+                       showComplete = entry.status != MediaListStatus.COMPLETED,
+                       onCardPressed = onCardPressed
+                   )
 
+               }
+           }
         }
     }
 }

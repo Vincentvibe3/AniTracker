@@ -26,6 +26,7 @@ import androidx.navigation.navArgument
 import io.github.vincentvibe3.anitracker.anilist.AnimeCardData
 import io.github.vincentvibe3.anitracker.anilist.AnimeListViewModel
 import io.github.vincentvibe3.anitracker.anilist.Clients
+import io.github.vincentvibe3.anitracker.anilist.UpdateAnime
 import io.github.vincentvibe3.anitracker.ui.theme.AniTrackerTheme
 import io.github.vincentvibe3.anitracker.views.AnimeListLayout
 import io.github.vincentvibe3.anitracker.views.MediaEdit
@@ -33,6 +34,7 @@ import io.github.vincentvibe3.anitracker.views.SettingsScreen
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaListStatus
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 
 // At the top level of your kotlin file:
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -58,6 +60,8 @@ class MainActivity : ComponentActivity() {
                 println("fetching")
                 try {
                     viewModel.fetchData()
+                    println(viewModel.customLists)
+                    println(viewModel.lists)
                 } catch (e:Exception){
                     e.printStackTrace()
                     repeat(5) {index ->
@@ -70,11 +74,17 @@ class MainActivity : ComponentActivity() {
                             index,
                             MediaListStatus.CURRENT,
                             0,
-                            ""
-//                            ImageResource(ImageResource.ImageType.RESOURCE, R.drawable.yohane.toString())
+                            mutableListOf("Watching"),
+                            mutableMapOf("Watching" to false),
+                            "",
+                            false,
+                            false,
+                            LocalDate(1,1,1),
+                            LocalDate(1,1,1)
+//                            ImageResource(ImageResource.ImageType.RESOURCE, R.drawable.yohane.toString()),
                         )
                         println("adding offline")
-                        viewModel.uiState["Watching"]?.backingList?.add(animeCardData)
+//                        viewModel.uiState["Watching"]?.backingList?.add(animeCardData)
                     }
                 }
             }
@@ -128,7 +138,16 @@ fun App(animeListViewModel:AnimeListViewModel){
             println("id $id")
             if (id!=null){
                 animeListViewModel.getShow(id)?.let { it1 ->
-                    MediaEdit(it1, animeListViewModel.getScoreFormat()){
+                    MediaEdit(it1, animeListViewModel.customLists, animeListViewModel.getScoreFormat(), {
+                        animeListViewModel.moveTo(it1, "Watching", "Deleted")// TODO: Remove temp code
+                        navController.navigate("AnimeList")
+                    },{ newData ->
+                        coroutineScope.launch {
+                            UpdateAnime(newData)
+                            animeListViewModel.updateData(newData)
+                            navController.navigate("AnimeList")
+                        }
+                    }){
 //                        coroutineScope.launch {
 //                            Clients.anilistClient.updateAnime(id)
 //                        }
