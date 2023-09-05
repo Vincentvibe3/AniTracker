@@ -11,4 +11,10 @@ object PhosphorIcons {
     @Composable fun smiley_meh() = ImageVector.vectorResource(id = R.drawable.smiley_meh)
     @Composable fun smiley_sad() = ImageVector.vectorResource(id = R.drawable.smiley_sad)
 
+    @Composable fun heart() = ImageVector.vectorResource(id = R.drawable.heart)
+
+    @Composable fun heart_fill() = ImageVector.vectorResource(id = R.drawable.heart_fill)
+
+    @Composable fun share() = ImageVector.vectorResource(id = R.drawable.share_network)
+
 }

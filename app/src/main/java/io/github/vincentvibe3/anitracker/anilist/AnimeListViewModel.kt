@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import io.github.vincentvibe3.anitraklib.anilist.serialization.FuzzyDateInt
 import io.github.vincentvibe3.anitraklib.anilist.serialization.MediaListCollectionFilter
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaListSort
+import io.github.vincentvibe3.anitraklib.anilist.types.MediaListStatus
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaType
 import io.github.vincentvibe3.anitraklib.anilist.types.ScoreFormat
 import kotlinx.datetime.Clock
@@ -41,7 +42,11 @@ class AnimeListViewModel():ViewModel() {
         get() = _customLists.toList()
 
     val organizedList
-        get() = _lists.associateWith { listName -> _entries.filter { it.lists.contains(listName)||it.customLists.getOrDefault(listName,false) } }
+        get() = _lists.associateWith { listName -> _entries.filter {
+//            it.lists.contains(listName)||
+
+                    it.customLists.getOrDefault(listName,false)
+        } }
 
     private var scoreFormat = ScoreFormat.POINT_10
 
@@ -67,6 +72,41 @@ class AnimeListViewModel():ViewModel() {
         println(removed)
         println(data)
         _entries.add(data)
+    }
+
+    fun removeEntry(data:AnimeCardData){
+        _entries.remove(data)
+    }
+
+    fun addEntry(data: AnimeCardData){
+        _entries.add(data)
+    }
+
+    fun offlineFetch(){
+        _lists.addAll(listOf("Watching", "Completed"))
+        repeat(6){ index ->
+            val animeCardData = AnimeCardData(
+                "$index Genjitsu no Yohane: SUNSHINE in the MIRROR",
+                3f,
+                0,
+                12,
+                "",
+                index,
+                MediaListStatus.CURRENT,
+                0,
+//                mutableListOf("Watching"),
+                mutableMapOf("Watching" to false),
+                "",
+                false,
+                false,
+                LocalDate(1,1,1),
+                LocalDate(1,1,1)
+//                            ImageResource(ImageResource.ImageType.RESOURCE, R.drawable.yohane.toString()),
+            )
+            _entries.add(
+                animeCardData
+            )
+        }
     }
 
     suspend fun fetchData(){
@@ -130,7 +170,6 @@ class AnimeListViewModel():ViewModel() {
                             id,
                             status,
                             rewatches,
-                            mutableListOf(it.name),
                             entryCustomLists,
                             notes,
                             private,
@@ -141,7 +180,7 @@ class AnimeListViewModel():ViewModel() {
 //                        println(data)
                         data
                     } else {
-                        existingEntry.lists.add(it.name)
+//                        existingEntry.lists.add(it.name)
                         null
                     }
                 } else {

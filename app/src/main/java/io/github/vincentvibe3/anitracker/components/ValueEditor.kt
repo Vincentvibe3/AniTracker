@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,11 +37,15 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, onChange:(Int)->Unit){
     var text by remember {
         mutableStateOf("$initialValue")
+    }
+    var lastValid by remember {
+        mutableStateOf(text)
     }
     val interactionSource = remember {
         MutableInteractionSource()
@@ -48,7 +53,22 @@ fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, on
     val isFocused by interactionSource.collectIsFocusedAsState()
     val valid by remember {
         derivedStateOf {
-            text.toIntOrNull()!=null
+            val converted = text.toIntOrNull()
+            if (converted==null){
+                false
+            } else {
+                val lowerCondition = if (lowerBound!=null){
+                    converted>=lowerBound
+                } else {
+                    true
+                }
+                val upperCondition = if (upperBound!=null){
+                    converted<=upperBound
+                } else {
+                    true
+                }
+                lowerCondition&&upperCondition
+            }
         }
     }
     val borderColor by remember {
@@ -57,6 +77,13 @@ fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, on
                 isFocused&&!valid-> Color(0xFFb72e2e)
                 isFocused&&valid-> Color(0xFF3dc028)
                 else -> Color(0xFF7e7e7e)
+            }
+        }
+    }
+    if (!isFocused&&!valid){
+        LaunchedEffect(key1 = Unit){
+            launch {
+                text = lastValid
             }
         }
     }
@@ -97,6 +124,7 @@ fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, on
     ) {
         QuickAccessButton(onClick = {
             text = "${text.toInt()-1}"
+            lastValid = text
         }, icon = Icons.Default.KeyboardArrowDown, enabled = if (valid){
             if (lowerBound!=null){
                 lowerBound<text.toInt()
@@ -110,6 +138,7 @@ fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, on
             value = text,{
                 text = it
                 if (valid){
+                    lastValid = text
                     onChange(text.toInt())
                 }
             },
@@ -136,6 +165,7 @@ fun ValueEditor(initialValue:Int, lowerBound:Int?=null, upperBound:Int?=null, on
         }
         QuickAccessButton(onClick = {
             text = "${text.toInt()+1}"
+            lastValid = text
         }, icon = Icons.Default.KeyboardArrowUp, enabled = if (valid){
             if (upperBound!=null){
                 upperBound>text.toInt()

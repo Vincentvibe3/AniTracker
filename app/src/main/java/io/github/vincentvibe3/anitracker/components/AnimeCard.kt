@@ -347,7 +347,7 @@ fun AnimeCardPreview(){
                 1,
                 MediaListStatus.CURRENT,
                 0,
-                mutableListOf("Watching"),
+//                mutableListOf("Watching"),
                 mutableMapOf(),
                 "",
                 false,

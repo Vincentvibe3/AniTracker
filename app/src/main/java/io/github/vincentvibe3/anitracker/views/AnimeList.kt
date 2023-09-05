@@ -152,14 +152,17 @@ fun AnimeListLayout(animeListViewModel: AnimeListViewModel, scoreFormat: ScoreFo
                 ) {
 
                 }
-                AnimeList(PaddingValues(0.dp), animeListViewModel, scoreFormat = scoreFormat,onEditRequest, onCardPressed = onCardPressed){ entry, addedTo, removedFrom ->
+                AnimeList(PaddingValues(0.dp), animeListViewModel, scoreFormat = scoreFormat,onEditRequest, onCardPressed = onCardPressed){ entry, newEntry, ->
                     coroutineScope.launch {
                         val result = snackbarHostState.showSnackbar(
                             "Completed ${entry.title}",
                             "Undo",
                             duration = SnackbarDuration.Short)
-                        if (result== SnackbarResult.ActionPerformed){
-                            animeListViewModel.moveTo(entry, removedFrom, addedTo)
+                        if (result == SnackbarResult.ActionPerformed){
+                            animeListViewModel.addEntry(entry)
+                            animeListViewModel.removeEntry(newEntry)
+                            println(entry)
+//                            animeListViewModel.moveTo(entry, removedFrom, addedTo)
                         } else {
                             println("Add Action Committed")
                         }
@@ -173,7 +176,7 @@ fun AnimeListLayout(animeListViewModel: AnimeListViewModel, scoreFormat: ScoreFo
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, scoreFormat: ScoreFormat, onEditRequest: (anime: AnimeCardData) -> Unit, onCardPressed:(anime: AnimeCardData)->Unit, onAnimeCompleted:(AnimeCardData, removedFrom:String, addedTo:String) -> Unit){
+fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, scoreFormat: ScoreFormat, onEditRequest: (anime: AnimeCardData) -> Unit, onCardPressed:(anime: AnimeCardData)->Unit, onAnimeCompleted:(AnimeCardData, AnimeCardData) -> Unit){
 //    val uiState = viewModel.uiState
     val entries = viewModel.entries
     val lists = viewModel.lists
@@ -252,8 +255,13 @@ fun AnimeList(paddingValues: PaddingValues, viewModel: AnimeListViewModel, score
                            showScoreEdit = true
                        },
                        onCompletePressed = {
-                           viewModel.moveTo(entry, list, "Completed")
-                           onAnimeCompleted(entry, list, "Completed")
+                           val snapshot = entry.deepCopy()
+                           viewModel.removeEntry(snapshot)
+                           entry.status = MediaListStatus.COMPLETED
+//                           entry.lists.add("Completed")
+//                           entry.lists.remove(list)
+                           viewModel.addEntry(entry)
+                           onAnimeCompleted(snapshot, entry)
                        },
                        showComplete = entry.status != MediaListStatus.COMPLETED,
                        onCardPressed = onCardPressed
