@@ -26,6 +26,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,6 +36,7 @@ import io.github.vincentvibe3.anitracker.anilist.AnimeCardData
 import io.github.vincentvibe3.anitracker.anilist.AnimeListViewModel
 import io.github.vincentvibe3.anitracker.anilist.Clients
 import io.github.vincentvibe3.anitracker.anilist.MediaViewData
+import io.github.vincentvibe3.anitracker.anilist.MediaViewModel
 import io.github.vincentvibe3.anitracker.anilist.toMediaViewData
 import io.github.vincentvibe3.anitracker.ui.theme.AniTrackerTheme
 import io.github.vincentvibe3.anitracker.views.AnimeListLayout

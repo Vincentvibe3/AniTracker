@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
@@ -49,6 +48,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import io.github.vincentvibe3.anitracker.anilist.MediaViewData
+import io.github.vincentvibe3.anitracker.anilist.MediaViewModel
 import io.github.vincentvibe3.anitracker.anilist.toPrettyString
 import io.github.vincentvibe3.anitracker.components.QuickAccessButton
 import io.github.vincentvibe3.anitracker.components.ScoreDisplay
@@ -77,13 +78,21 @@ import io.github.vincentvibe3.anitraklib.anilist.serialization.FuzzyDateInt
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaFormat
 import io.github.vincentvibe3.anitraklib.anilist.types.MediaSource
 import io.github.vincentvibe3.anitraklib.anilist.types.ScoreFormat
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class,
     ExperimentalLayoutApi::class
 )
 
 @Composable
-fun MediaView(data:MediaViewData, scoringMethod:ScoreFormat){
+fun MediaView(scoringMethod:ScoreFormat, id:Int, mediaViewModel: MediaViewModel = viewModel()){
+    val data: MediaViewData? = mediaViewModel.mediaData
+    LaunchedEffect(key1 = Unit){
+        val existingData = mediaViewModel.mediaData
+        if (existingData == null){
+            mediaViewModel.loadData(id)
+        }
+    }
     val scrollState = rememberScrollState()
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
